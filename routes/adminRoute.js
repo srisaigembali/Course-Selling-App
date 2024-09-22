@@ -1,4 +1,5 @@
 const { Router } = require("express");
+const adminModel = require("../models/adminModel");
 
 const adminRouter = Router();
 
