@@ -1,8 +1,10 @@
 const { Router } = require("express");
 const userModel = require("../models/userModel");
+const purchaseModel = require("../models/purchaseModel");
 const zod = require("zod");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const userMiddleware = require("../middlewares/userMiddleware");
 
 const userRouter = Router();
 const UserSchema = zod.object({
@@ -76,10 +78,19 @@ userRouter.post("/signin", async (req, res) => {
 	}
 });
 
-userRouter.get("/purchases", (req, res) => {
-	res.json({
-		message: "purchases",
-	});
+userRouter.get("/purchases", userMiddleware, async (req, res) => {
+	try {
+		const userId = req.userId;
+		const purchasedCourses = await purchaseModel.find({ userId });
+		res.status(200).json({
+			courses: purchasedCourses,
+		});
+	} catch (error) {
+		res.status(500).json({
+			message: "Error while getting purcahsed courses...",
+			error,
+		});
+	}
 });
 
 module.exports = {
