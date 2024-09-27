@@ -1,8 +1,10 @@
 const { Router } = require("express");
 const adminModel = require("../models/adminModel");
+const courseModel = require("../models/courseModel");
 const zod = require("zod");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const adminMiddleware = require("../middlewares/adminMiddleware");
 
 const adminRouter = Router();
 const AdminSchema = zod.object({
@@ -76,22 +78,68 @@ adminRouter.post("/signin", async (req, res) => {
 	}
 });
 
-adminRouter.post("/course", (req, res) => {
-	res.json({
-		message: "create course",
-	});
+adminRouter.post("/course", adminMiddleware, async (req, res) => {
+	try {
+		const adminId = req.adminId;
+		const { title, description, imageUrl, price } = req.body;
+
+		// creating web3 saas for image upload in 6 hours harkirat video
+		const course = await courseModel.create({
+			title,
+			description,
+			imageUrl,
+			price,
+			creatorId: adminId,
+		});
+		res.status(200).json({
+			message: "Course created successfully",
+			courseId: course._id,
+		});
+	} catch (error) {
+		res.status(500).json({
+			message: "Error while creating course...",
+			error,
+		});
+	}
 });
 
-adminRouter.put("/course", (req, res) => {
-	res.json({
-		message: "update course",
-	});
+adminRouter.put("/course", adminMiddleware, async (req, res) => {
+	try {
+		const adminId = req.adminId;
+		const { title, description, imageUrl, price } = req.body;
+
+		await courseModel.updateOne(
+			{ creatorId: adminId },
+			{
+				title,
+				description,
+				imageUrl,
+				price,
+			}
+		);
+		res.status(200).json({
+			message: "Course updated successfully",
+		});
+	} catch (error) {
+		res.status(500).json({
+			message: "Error while updating course...",
+			error,
+		});
+	}
 });
 
-adminRouter.get("/courses", (req, res) => {
-	res.json({
-		message: "courses",
-	});
+adminRouter.get("/courses", adminMiddleware, async (req, res) => {
+	try {
+		const courses = await courseModel.find();
+		res.status(200).json({
+			courses,
+		});
+	} catch (error) {
+		res.status(500).json({
+			message: "Error while getting courses...",
+			error,
+		});
+	}
 });
 
 module.exports = {
